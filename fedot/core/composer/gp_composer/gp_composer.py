@@ -15,8 +15,7 @@ from fedot.core.optimisers.gp_comp.operators.mutation import MutationStrengthEnu
 from fedot.core.optimisers.graph import OptGraph
 from fedot.core.pipelines.pipeline import Pipeline
 from fedot.core.pipelines.validation import common_rules, ts_rules, validate
-from fedot.core.repository.quality_metrics_repository import (MetricsEnum,
-                                                              MetricsRepository)
+from fedot.core.repository.quality_metrics_repository import MetricsEnum, MetricsRepository
 from fedot.core.repository.tasks import TaskTypesEnum
 from fedot.core.validation.compose.tabular import table_metric_calculation
 from fedot.core.validation.compose.time_series import ts_metric_calculation
@@ -47,6 +46,7 @@ class PipelineComposerRequirements(ComposerRequirements):
     :attribute mutation_strength: strength of mutation in tree (using in certain mutation types)
     :attribute start_depth: start value of tree depth
     :attribute validation_blocks: number of validation blocks for time series validation
+    :attribute n_jobs: num of n_jobs
     """
     pop_size: Optional[int] = 20
     num_of_generations: Optional[int] = 20
@@ -55,6 +55,7 @@ class PipelineComposerRequirements(ComposerRequirements):
     mutation_strength: MutationStrengthEnum = MutationStrengthEnum.mean
     start_depth: int = None
     validation_blocks: int = None
+    n_jobs: int = 1
 
 
 class GPComposer(Composer):
@@ -213,6 +214,7 @@ class GPComposer(Composer):
             gc.collect()
         except Exception as ex:
             self.log.info(f'Pipeline assessment warning: {ex}. Continue.')
+
             evaluated_metrics = None
         return evaluated_metrics
 

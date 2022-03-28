@@ -5,10 +5,12 @@ from typing import Callable, List, Optional, Tuple, Union
 
 from fedot.core.composer.cache import OperationsCache
 from fedot.core.dag.graph import Graph
+from fedot.core.dag.graph_node import GraphNode
 from fedot.core.dag.graph_operator import GraphOperator
-from fedot.core.data.data import InputData
+from fedot.core.data.data import InputData, OutputData
 from fedot.core.data.multi_modal import MultiModalData
 from fedot.core.log import Log, default_log
+from fedot.core.operations.data_operation import DataOperation
 from fedot.core.operations.model import Model
 from fedot.core.optimisers.timer import Timer
 from fedot.core.pipelines.node import Node, PrimaryNode, SecondaryNode
@@ -51,11 +53,13 @@ class Pipeline(Graph):
             nodes = self.nodes
 
         for node in nodes:
+            if not isinstance(node, GraphNode):
+                continue
             if node.nodes_from and not isinstance(node, SecondaryNode):
                 self.operator.update_node(old_node=node,
                                           new_node=SecondaryNode(nodes_from=node.nodes_from,
                                                                  content=node.content))
-            elif not node.nodes_from and not self.operator.node_children(node):
+            elif not node.nodes_from and not self.operator.node_children(node) and node != self.root_node:
                 self.nodes.remove(node)
             elif not node.nodes_from and not isinstance(node, PrimaryNode):
                 self.operator.update_node(old_node=node,
@@ -129,16 +133,23 @@ class Pipeline(Graph):
                 fitted_operations.append(node.fitted_operation)
 
     def fit(self, input_data: Union[InputData, MultiModalData], use_fitted=False,
-            time_constraint: Optional[timedelta] = None):
+            time_constraint: Optional[timedelta] = None, n_jobs=1) -> OutputData:
         """
         Run training process in all nodes in pipeline starting with root.
 
         :param input_data: data used for operation training
         :param use_fitted: flag defining whether use saved information about previous fits or not
         :param time_constraint: time constraint for operation fitting (seconds)
+        :param n_jobs: number of threads for nodes fitting
+
         """
+
+        _replace_n_jobs_in_nodes(self, n_jobs)
+
         if not use_fitted:
-            self.unfit(unfit_preprocessor=True)
+            self.unfit(mode='all', unfit_preprocessor=True)
+        else:
+            self.unfit(mode='data_operations', unfit_preprocessor=False)
 
         # Make copy of the input data to avoid performing inplace operations
         copied_input_data = deepcopy(input_data)
@@ -165,12 +176,18 @@ class Pipeline(Graph):
     def is_fitted(self):
         return all([(node.fitted_operation is not None) for node in self.nodes])
 
-    def unfit(self, unfit_preprocessor: bool = True):
+    def unfit(self, mode='all', unfit_preprocessor: bool = True):
         """
         Remove fitted operations for all nodes.
+
+        :param mode:
+            - 'all' - All models will be unfitted
+            - 'data_operations' - All data operations will be unfitted
+        :param unfit_preprocessor: should we unfit preprocessor
         """
         for node in self.nodes:
-            node.unfit()
+            if mode == 'all' or (mode == 'data_operations' and type(node.content['name']) == DataOperation):
+                node.unfit()
 
         if unfit_preprocessor:
             self.preprocessor = DataPreprocessor(self.log)
@@ -227,7 +244,7 @@ class Pipeline(Graph):
     def fine_tune_all_nodes(self, loss_function: Callable,
                             loss_params: dict = None,
                             input_data: Union[InputData, MultiModalData] = None,
-                            iterations=50, timeout: Optional[int] = 5,
+                            iterations=50, timeout: Optional[float] = 5,
                             cv_folds: int = None,
                             validation_blocks: int = 3) -> 'Pipeline':
         """ Tune all hyperparameters of nodes simultaneously via black-box
@@ -351,3 +368,13 @@ def nodes_with_operation(pipeline: Pipeline, operation_name: str) -> list:
     appropriate_nodes = filter(lambda x: x.operation.operation_type == operation_name, pipeline.nodes)
 
     return list(appropriate_nodes)
+
+
+def _replace_n_jobs_in_nodes(pipeline: Pipeline, n_jobs: int):
+    """ Function change number of jobs for nodes"""
+    for node in pipeline.nodes:
+        # TODO refactor
+        if 'n_jobs' in node.content['params']:
+            node.content['params']['n_jobs'] = n_jobs
+        if 'num_threads' in node.content['params']:
+            node.content['params']['num_threads'] = n_jobs

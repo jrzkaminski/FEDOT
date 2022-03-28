@@ -26,7 +26,7 @@ _ = classification_dataset
 
 def sample_pipeline():
     return Pipeline(SecondaryNode(operation_type='logit',
-                                  nodes_from=[PrimaryNode(operation_type='xgboost'),
+                                  nodes_from=[PrimaryNode(operation_type='rf'),
                                               PrimaryNode(operation_type='scaling')]))
 
 
@@ -123,7 +123,9 @@ def test_composer_with_cv_optimization_correct():
 def test_cv_api_correct():
     composer_params = {'max_depth': 1,
                        'max_arity': 2,
-                       'timeout': 0.1,
+                       'timeout': None,
+                       'pop_size': 3,
+                       'num_of_generations': 1,
                        'preset': 'fast_train',
                        'cv_folds': 2}
     task = Task(task_type=TaskTypesEnum.classification)

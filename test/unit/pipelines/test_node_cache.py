@@ -80,7 +80,7 @@ def pipeline_first():
     pipeline = Pipeline()
 
     root_of_tree, root_child_first, root_child_second = \
-        [SecondaryNode(model) for model in ('xgboost', 'xgboost', 'knn')]
+        [SecondaryNode(model) for model in ('rf', 'rf', 'knn')]
 
     for root_node_child in (root_child_first, root_child_second):
         for requirement_model in ('logit', 'lda'):
@@ -150,9 +150,10 @@ def pipeline_fifth():
     pipeline = pipeline_first()
     new_node = SecondaryNode('knn')
     pipeline.update_node(pipeline.root_node, new_node)
-    new_node = PrimaryNode('knn')
-    pipeline.update_node(pipeline.root_node.nodes_from[1].nodes_from[0], new_node)
-    pipeline.update_node(pipeline.root_node.nodes_from[1].nodes_from[1], new_node)
+    new_node1 = PrimaryNode('knn')
+    new_node2 = PrimaryNode('knn')
+    pipeline.update_node(pipeline.root_node.nodes_from[1].nodes_from[0], new_node1)
+    pipeline.update_node(pipeline.root_node.nodes_from[1].nodes_from[1], new_node2)
 
     return pipeline
 
