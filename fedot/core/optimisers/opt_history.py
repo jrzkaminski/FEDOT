@@ -9,7 +9,7 @@ from typing import Any, List, Optional, Union, Sequence
 from fedot.core.optimisers.adapters import PipelineAdapter
 from fedot.core.optimisers.gp_comp.individual import Individual
 from fedot.core.serializers import Serializer
-from fedot.core.validation.objective import Objective
+from fedot.core.optimisers.objective.objective import Objective
 from fedot.core.visualisation.opt_viz import PipelineEvolutionVisualiser
 
 from fedot.core.optimisers.utils.population_utils import get_metric_position
