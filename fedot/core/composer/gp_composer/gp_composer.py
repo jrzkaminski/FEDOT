@@ -1,7 +1,4 @@
-import platform
 from dataclasses import dataclass
-from functools import partial
-from multiprocessing import set_start_method
 from typing import List, Optional, Sequence, Union
 
 from fedot.core.composer.cache import OperationsCache
@@ -12,7 +9,7 @@ from fedot.core.log import Log
 from fedot.core.optimisers.gp_comp.operators.mutation import MutationStrengthEnum
 from fedot.core.optimisers.graph import OptGraph
 from fedot.core.optimisers.objective.data_objective_builder import DataObjectiveBuilder
-from fedot.core.optimisers.opt_history import OptHistory, log_to_history
+from fedot.core.optimisers.opt_history import OptHistory
 from fedot.core.optimisers.optimizer import GraphOptimiser
 from fedot.core.pipelines.pipeline import Pipeline
 
