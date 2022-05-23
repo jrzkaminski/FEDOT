@@ -15,14 +15,6 @@ from fedot.core.optimisers.objective.data_objective_builder import DataObjective
 from fedot.core.optimisers.opt_history import OptHistory, log_to_history
 from fedot.core.optimisers.optimizer import GraphOptimiser
 from fedot.core.pipelines.pipeline import Pipeline
-from fedot.core.pipelines.validation import common_rules, ts_rules
-from fedot.core.repository.tasks import TaskTypesEnum
-
-
-def set_multiprocess_start_method():
-    system = platform.system()
-    if system == 'Linux':
-        set_start_method("spawn", force=True)
 
 
 @dataclass
@@ -82,9 +74,6 @@ class GPComposer(Composer):
                                                       self.cache, self.log)
 
     def compose_pipeline(self, data: Union[InputData, MultiModalData]) -> Union[Pipeline, List[Pipeline]]:
-        if self.composer_requirements.max_pipeline_fit_time:
-            set_multiprocess_start_method()
-
         # shuffle data if necessary
         data.shuffle()
 
