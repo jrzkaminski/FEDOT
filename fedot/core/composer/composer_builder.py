@@ -1,3 +1,4 @@
+from functools import partial
 from typing import Optional, Union, List, Dict, Sequence, Type, Iterable
 
 from fedot.core.composer.advisor import PipelineChangeAdvisor
@@ -10,6 +11,7 @@ from fedot.core.optimisers.gp_comp.gp_optimiser import EvoGraphOptimiser, GPGrap
 from fedot.core.optimisers.gp_comp.operators.inheritance import GeneticSchemeTypesEnum
 from fedot.core.optimisers.gp_comp.operators.regularization import RegularizationTypesEnum
 from fedot.core.optimisers.gp_comp.param_free_gp_optimiser import EvoGraphParameterFreeOptimiser
+from fedot.core.optimisers.opt_history import log_to_history, OptHistory
 from fedot.core.optimisers.optimizer import GraphGenerationParams, GraphOptimiser, GraphOptimiserParameters
 from fedot.core.pipelines.pipeline import Pipeline
 from fedot.core.pipelines.validation import common_rules, ts_rules
@@ -36,6 +38,7 @@ class ComposerBuilder:
 
         self.composer_cls: Type[Composer] = GPComposer
         self.initial_pipelines: Optional[Sequence[Pipeline]] = None
+        self._history_folder: Optional[str] = None
         self.log: Optional[Log] = None
         self.cache: Optional[OperationsCache] = None
         self.composer_requirements: PipelineComposerRequirements = self._get_default_composer_params()
@@ -70,6 +73,10 @@ class ComposerBuilder:
         else:
             raise ValueError(f'Incorrect type of initial_assumption: '
                              f'Sequence[Pipeline] or Pipeline needed, but has {type(initial_pipelines)}')
+        return self
+
+    def with_history(self, history_folder: Optional[str] = None):
+        self._history_folder = history_folder
         return self
 
     def with_logger(self, logger):
@@ -130,10 +137,17 @@ class ComposerBuilder:
                                    parameters=self.optimiser_parameters,
                                    log=self.log,
                                    **self.optimizer_external_parameters)
+        history = None
+        if self._history_folder:
+            # fix init of GPComposer, use history
+            history = OptHistory(objective, self._history_folder)
+            history_cb = partial(log_to_history, history)
+            optimiser.optimisation_callback = history_cb
 
         composer = self.composer_cls(optimiser,
                                      self.composer_requirements,
                                      self.initial_pipelines,
+                                     history,
                                      self.log,
                                      self.cache)
 
