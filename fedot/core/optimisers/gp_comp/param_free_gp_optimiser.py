@@ -25,7 +25,7 @@ class EvoGraphParameterFreeOptimiser(EvoGraphOptimiser):
                  requirements: PipelineComposerRequirements,
                  graph_generation_params: GraphGenerationParams,
                  parameters: Optional[GPGraphOptimiserParameters] = None,
-                 log: Log = None):
+                 log: Optional[Log] = None):
         super().__init__(objective, initial_graph, requirements, graph_generation_params, parameters, log)
 
         self._min_population_size_with_elitism = 7
