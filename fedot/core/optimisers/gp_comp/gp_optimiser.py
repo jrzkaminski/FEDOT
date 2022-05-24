@@ -107,24 +107,6 @@ class EvoGraphOptimiser(GraphOptimiser):
         self.generations = GenerationKeeper(self.objective)
         self.timer = OptimisationTimer(timeout=self.requirements.timeout, log=self.log)
 
-        # Define parameters
-
-        self._min_population_size_with_elitism = 5
-
-        start_depth = requirements.start_depth or requirements.max_depth
-        self._graph_depth = GraphDepth(self.generations,
-                                       start_depth=start_depth,
-                                       max_depth=requirements.max_depth,
-                                       max_stagnated_generations=parameters.depth_increase_step,
-                                       adaptive=parameters.with_auto_depth_configuration)
-        self.max_depth = self._graph_depth.initial
-
-        # Define adaptive parameters
-        self._pop_size: PopulationSize = \
-            init_adaptive_pop_size(parameters.genetic_scheme_type, requirements, self.generations)
-        self._operators_prob = \
-            init_adaptive_operators_prob(parameters.genetic_scheme_type, requirements)
-
         # stopping_after_n_generation may be None, so use some obvious max number
         max_stagnation_length = parameters.stopping_after_n_generation or requirements.num_of_generations
         self.stop_optimisation = \
@@ -139,6 +121,26 @@ class EvoGraphOptimiser(GraphOptimiser):
                 lambda: self.generations.stagnation_duration >= max_stagnation_length,
                 'Optimisation finished: Early stopping criteria was satisfied'
             )
+
+        # Define parameters
+
+        self._min_population_size_with_elitism = 5
+
+        start_depth = requirements.start_depth or requirements.max_depth
+        self._graph_depth = GraphDepth(self.generations,
+                                       start_depth=start_depth,
+                                       max_depth=requirements.max_depth,
+                                       max_stagnated_generations=parameters.depth_increase_step,
+                                       adaptive=parameters.with_auto_depth_configuration)
+        self.max_depth = self._graph_depth.initial
+
+        # Define adaptive parameters
+
+        self._pop_size: PopulationSize = \
+            init_adaptive_pop_size(parameters.genetic_scheme_type, requirements, self.generations)
+
+        self._operators_prob = \
+            init_adaptive_operators_prob(parameters.genetic_scheme_type, requirements)
 
     def _init_population(self, pop_size: int, max_depth: int) -> PopulationT:
         builder = InitialPopulationBuilder(self.graph_generation_params)
@@ -178,7 +180,6 @@ class EvoGraphOptimiser(GraphOptimiser):
         self.log.info(f'spent time: {round(self.timer.minutes_from_start, 1)} min')
 
     def _operators_prob_update(self):
-        """Extension point of the algorithm to adaptively modify parameters on each iteration."""
         if not self.generations.is_any_improved:
             self.requirements.mutation_prob, self.requirements.crossover_prob = \
                 self._operators_prob.next(self.population)
