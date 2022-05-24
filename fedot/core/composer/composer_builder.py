@@ -10,9 +10,7 @@ from fedot.core.composer.gp_composer.gp_composer import GPComposer, PipelineComp
 from fedot.core.log import Log
 from fedot.core.optimisers.adapters import PipelineAdapter
 from fedot.core.optimisers.gp_comp.gp_optimiser import EvoGraphOptimiser, GPGraphOptimiserParameters
-from fedot.core.optimisers.gp_comp.operators.inheritance import GeneticSchemeTypesEnum
 from fedot.core.optimisers.gp_comp.operators.regularization import RegularizationTypesEnum
-from fedot.core.optimisers.gp_comp.param_free_gp_optimiser import EvoGraphParameterFreeOptimiser
 from fedot.core.optimisers.opt_history import log_to_history, OptHistory
 from fedot.core.optimisers.optimizer import GraphGenerationParams, GraphOptimiser, GraphOptimiserParameters
 from fedot.core.pipelines.pipeline import Pipeline
@@ -115,11 +113,6 @@ class ComposerBuilder:
         return [ComplexityMetricsEnum.node_num]
 
     def build(self) -> Composer:
-        optimiser_type = self.optimiser_cls
-        if (optimiser_type is EvoGraphOptimiser and
-                self.optimiser_parameters.genetic_scheme_type is GeneticSchemeTypesEnum.parameter_free):
-            optimiser_type = EvoGraphParameterFreeOptimiser
-
         if self.task.task_type is TaskTypesEnum.ts_forecasting:
             graph_constraint_rules = common_rules + ts_rules
         else:
@@ -140,13 +133,13 @@ class ComposerBuilder:
 
         objective = Objective(self.metrics, self.optimiser_parameters.multi_objective, log=self.log)
 
-        optimiser = optimiser_type(objective=objective,
-                                   initial_graph=self.initial_pipelines,
-                                   requirements=self.composer_requirements,
-                                   graph_generation_params=graph_generation_params,
-                                   parameters=self.optimiser_parameters,
-                                   log=self.log,
-                                   **self.optimizer_external_parameters)
+        optimiser = self.optimiser_cls(objective=objective,
+                                       initial_graph=self.initial_pipelines,
+                                       requirements=self.composer_requirements,
+                                       graph_generation_params=graph_generation_params,
+                                       parameters=self.optimiser_parameters,
+                                       log=self.log,
+                                       **self.optimizer_external_parameters)
         history = None
         if self._history_folder:
             # fix init of GPComposer, use history
