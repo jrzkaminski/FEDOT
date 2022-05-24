@@ -3,10 +3,8 @@ from typing import Optional, Union, Sequence
 from fedot.core.composer.gp_composer.gp_composer import PipelineComposerRequirements
 from fedot.core.log import Log
 from fedot.core.optimisers.gp_comp.gp_optimiser import EvoGraphOptimiser, GPGraphOptimiserParameters
-from fedot.core.utilities.sequence_iterator import SequenceIterator, fibonacci_sequence
 from fedot.core.optimisers.gp_comp.operators.inheritance import GeneticSchemeTypesEnum
 from fedot.core.optimisers.gp_comp.parameters.mutation_prob import AdaptiveMutationProb
-from fedot.core.optimisers.gp_comp.parameters.population_size import PopulationSize, AdaptivePopulationSize
 from fedot.core.optimisers.optimizer import GraphGenerationParams
 from fedot.core.optimisers.objective.objective import Objective
 from fedot.core.pipelines.pipeline import Pipeline
@@ -34,10 +32,6 @@ class EvoGraphParameterFreeOptimiser(EvoGraphOptimiser):
             self.parameters.genetic_scheme_type = GeneticSchemeTypesEnum.parameter_free
 
         # Define adaptive parameters
-        pop_size_progression = SequenceIterator(sequence_func=fibonacci_sequence,
-                                                start_value=requirements.pop_size,
-                                                min_sequence_value=1, max_sequence_value=requirements.max_pop_size)
-        self._pop_size: PopulationSize = AdaptivePopulationSize(self.generations, pop_size_progression)
         self._mutation_rate = AdaptiveMutationProb()
 
     def _operators_prob_update(self):

@@ -21,7 +21,7 @@ from fedot.core.optimisers.generation_keeper import GenerationKeeper
 from fedot.core.optimisers.gp_comp.operators.mutation import MutationTypesEnum, mutation
 from fedot.core.optimisers.gp_comp.operators.operator import PopulationT
 from fedot.core.optimisers.gp_comp.parameters.graph_depth import GraphDepth
-from fedot.core.optimisers.gp_comp.parameters.population_size import PopulationSize, ConstRatePopulationSize
+from fedot.core.optimisers.gp_comp.parameters.population_size import PopulationSize, init_adaptive_pop_size
 from fedot.core.optimisers.gp_comp.operators.regularization import RegularizationTypesEnum, regularized_population
 from fedot.core.optimisers.gp_comp.operators.selection import SelectionTypesEnum, selection, crossover_parents_selection
 from fedot.core.pipelines.pipeline import Pipeline
@@ -108,13 +108,8 @@ class EvoGraphOptimiser(GraphOptimiser):
 
         self._min_population_size_with_elitism = 3
 
-        is_steady_state = self.parameters.genetic_scheme_type == GeneticSchemeTypesEnum.steady_state
-        default_pop_size = 10
-        self._pop_size: PopulationSize = ConstRatePopulationSize(
-            pop_size=requirements.pop_size or default_pop_size,
-            offspring_rate=1.0 if is_steady_state else requirements.offspring_rate,
-            max_pop_size=requirements.max_pop_size,
-        )
+        self._pop_size: PopulationSize = \
+            init_adaptive_pop_size(parameters.genetic_scheme_type, requirements, self.generations)
 
         start_depth = requirements.start_depth or requirements.max_depth
         self._graph_depth = GraphDepth(self.generations,
