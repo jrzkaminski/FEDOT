@@ -61,14 +61,14 @@ def test_prepare_for_visualisation(capsys):
 
     history.print_leaderboard()
     captured = capsys.readouterr()
-    assert 'n_lda_default_params' in captured.out
+    assert OptNode('lda').descriptive_id in captured.out
     assert 'Position' in captured.out
 
     dumped_history = history.save()
     loaded_history = OptHistory.load(dumped_history)
     loaded_history.print_leaderboard()
     captured = capsys.readouterr()
-    assert 'n_lda_default_params' in captured.out
+    assert OptNode('lda').descriptive_id in captured.out
     assert 'Position' in captured.out
 
 
