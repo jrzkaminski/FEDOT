@@ -206,7 +206,7 @@ class Data:
         messages = df_text['text'].astype('U').tolist()
 
         features = np.array(messages)
-        target = np.array(df_text[label])
+        target = np.array(df_text[label]).reshape(-1, 1)
         idx = [index for index in range(len(target))]
 
         return InputData(idx=idx, features=features,
@@ -224,7 +224,7 @@ class Data:
         df_text = TextBatchLoader(path=files_path).extract()
 
         features = np.array(df_text['text'])
-        target = np.array(df_text[label])
+        target = np.array(df_text[label]).reshape(-1, 1)
         idx = [index for index in range(len(target))]
 
         return InputData(idx=idx, features=features,
