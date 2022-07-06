@@ -5,6 +5,7 @@ from typing import (Any, Callable, List, Optional, Union, Sequence, Collection)
 from fedot.core.composer.advisor import DefaultChangeAdvisor
 from fedot.core.dag.graph import Graph
 from fedot.core.log import Log, default_log
+from fedot.core.optimisers.adapt_registry import init_adapter
 from fedot.core.optimisers.adapters import BaseOptimizationAdapter, DirectAdapter
 from fedot.core.optimisers.archive import GenerationKeeper
 from fedot.core.optimisers.gp_comp.individual import Individual
@@ -61,6 +62,7 @@ class GraphGenerationParams:
         self.adapter = adapter or DirectAdapter()
         self.verifier = GraphVerifier(rules_for_constraint, self.adapter)
         self.advisor = advisor or DefaultChangeAdvisor()
+        init_adapter(self.adapter)
 
 
 class GraphOptimiser:
