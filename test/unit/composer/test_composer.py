@@ -323,7 +323,7 @@ def test_gp_composer_random_graph_generation_looping():
     task = Task(TaskTypesEnum.regression)
 
     adapter = PipelineAdapter()
-    verifier = verifier_for_task(task.task_type, adapter)
+    verifier = verifier_for_task(task.task_type)
     params = GraphGenerationParams(adapter, verifier, PipelineChangeAdvisor(task=task))
 
     requirements = PipelineComposerRequirements(

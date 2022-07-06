@@ -60,7 +60,7 @@ class GraphGenerationParams:
                  rules_for_constraint: Sequence[VerifierRuleType] = (),
                  advisor: Optional[DefaultChangeAdvisor] = None):
         self.adapter = adapter or DirectAdapter()
-        self.verifier = GraphVerifier(rules_for_constraint, self.adapter)
+        self.verifier = GraphVerifier(rules_for_constraint)
         self.advisor = advisor or DefaultChangeAdvisor()
         init_adapter(self.adapter)
 
