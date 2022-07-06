@@ -14,12 +14,13 @@ def run_log_example(log_file):
     train_data, test_data = get_case_train_test_data()
 
     # Use default_log if you do not have json config file for log
-    log = Log(logger_name='logger', log_file=log_file).get_adapter(prefix=pathlib.Path(__file__).stem)
+    log = Log(logger_name='logger', log_file=log_file)
+    log_adapter = log.get_adapter(prefix=pathlib.Path(__file__).stem)
 
-    log.info('start creating pipeline')
+    log_adapter.info('start creating pipeline')
     pipeline = classification_complex_pipeline()
 
-    log.info('start fitting pipeline')
+    log_adapter.info('start fitting pipeline')
     pipeline.fit(train_data, use_fitted=False)
 
 
