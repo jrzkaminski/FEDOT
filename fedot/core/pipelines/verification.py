@@ -9,7 +9,6 @@ from fedot.core.dag.verification_rules import (
     has_one_root
 )
 from fedot.core.log import Log
-from fedot.core.optimisers.adapters import PipelineAdapter, BaseOptimizationAdapter
 from fedot.core.optimisers.graph import OptGraph
 from fedot.core.pipelines.verification_rules import (
     has_correct_data_connections,
