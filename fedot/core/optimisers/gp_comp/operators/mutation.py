@@ -61,7 +61,7 @@ def _will_mutation_be_applied(mutation_prob, mutation_type) -> bool:
     return not (random() > mutation_prob or mutation_type is MutationTypesEnum.none)
 
 
-def _adapt_and_apply_mutations(new_graph: Any, mutation_prob: float, types: List[Union[MutationTypesEnum, Callable]],
+def _adapt_and_apply_mutations(graph: OptGraph, mutation_prob: float, types: List[Union[MutationTypesEnum, Callable]],
                                num_mut: int, requirements, params: 'GraphGenerationParams', max_depth: int):
     """
     Apply mutation in several iterations with specific adaptation of each graph
@@ -75,17 +75,10 @@ def _adapt_and_apply_mutations(new_graph: Any, mutation_prob: float, types: List
             if is_static_mutation_type else choice(types)
         is_custom_mutation = isinstance(mutation_type, Callable)
 
-        if is_custom_mutation:
-            new_graph = params.adapter.restore(new_graph)
-        else:
-            if not isinstance(new_graph, OptGraph):
-                new_graph = params.adapter.adapt(new_graph)
-        new_graph = _apply_mutation(new_graph=new_graph, mutation_prob=mutation_prob,
+        new_graph = _apply_mutation(new_graph=graph, mutation_prob=mutation_prob,
                                     mutation_type=mutation_type, is_custom_mutation=is_custom_mutation,
                                     requirements=requirements, params=params, max_depth=max_depth)
         mutation_names.append(str(mutation_type))
-        if not isinstance(new_graph, OptGraph):
-            new_graph = params.adapter.adapt(new_graph)
         if is_custom_mutation:
             # custom mutation occurs once
             break
