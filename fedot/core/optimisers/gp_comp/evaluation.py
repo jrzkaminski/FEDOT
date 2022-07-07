@@ -5,11 +5,12 @@ from abc import ABC, abstractmethod
 from contextlib import closing
 from random import choice
 
-from typing import Dict, Optional
+from typing import Dict, Optional, Tuple
 
 from fedot.core.dag.graph import Graph
 from fedot.core.log import Log, default_log
-from fedot.core.optimisers.adapters import BaseOptimizationAdapter
+from fedot.core.adapter import BaseOptimizationAdapter, restore
+from fedot.core.optimisers.fitness import Fitness
 from fedot.core.optimisers.gp_comp.individual import Individual
 from fedot.core.optimisers.gp_comp.operators.operator import EvaluationOperator, PopulationT
 from fedot.core.optimisers.graph import OptGraph
@@ -108,21 +109,24 @@ class MultiprocessingDispatcher(ObjectiveEvaluationDispatcher):
 
         graph = self.evaluation_cache.get(ind.uid, ind.graph)
         _restrict_n_jobs_in_nodes(graph)
-        adapted_graph = self._graph_adapter.restore(graph)
 
-        ind.fitness = self._objective_eval(adapted_graph)
-
-        if self._post_eval_callback:
-            self._post_eval_callback(adapted_graph)
-        if self._cleanup:
-            self._cleanup(adapted_graph)
-        gc.collect()
-
-        ind.graph = self._graph_adapter.adapt(adapted_graph)
+        ind.fitness, ind.graph = self._evaluate_graph(graph)
 
         end_time = timeit.default_timer()
         ind.metadata['computation_time_in_seconds'] = end_time - start_time
         return ind if ind.fitness.valid else None
+
+    @restore
+    def _evaluate_graph(self, graph: Graph) -> Tuple[Fitness, Graph]:
+        fitness = self._objective_eval(graph)
+
+        if self._post_eval_callback:
+            self._post_eval_callback(graph)
+        if self._cleanup:
+            self._cleanup(graph)
+        gc.collect()
+
+        return fitness, graph
 
     def _reset_eval_cache(self):
         self.evaluation_cache: Dict[int, Graph] = {}
@@ -171,13 +175,16 @@ class SimpleDispatcher(ObjectiveEvaluationDispatcher):
             return None
         start_time = timeit.default_timer()
 
-        graph = ind.graph
-        adapted_graph = self._graph_adapter.restore(graph)
-        ind.fitness = self._objective_eval(adapted_graph)
-        ind.graph = self._graph_adapter.adapt(adapted_graph)
+        ind.fitness, ind.graph = self._evaluate_graph(ind.graph)
+
         end_time = timeit.default_timer()
         ind.metadata['computation_time_in_seconds'] = end_time - start_time
         return ind if ind.fitness.valid else None
+
+    @restore
+    def _evaluate_graph(self, graph: Graph) -> Tuple[Fitness, Graph]:
+        fitness = self._objective_eval(graph)
+        return fitness, graph
 
 
 def determine_n_jobs(n_jobs=-1, logger=None):
