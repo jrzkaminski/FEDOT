@@ -40,11 +40,7 @@ def has_final_operation_as_model(pipeline: 'Pipeline'):
     root_node = pipeline.root_node
 
     if type(root_node.operation) is not Model and type(root_node.operation) is not AtomizedModel:
-        print(root_node.descriptive_id)
-        print(type(root_node.operation))
-
         raise ValueError(f'{ERROR_PREFIX} Root operation is not a model')
-
     return True
 
 
