@@ -9,9 +9,6 @@ from test.unit.test_logger import release_log
 
 
 def run_log_example(log_file):
-    train_file_path, test_file_path = get_scoring_case_data_paths()
-
-    current_path = os.path.dirname(__name__)
     train_data, test_data = get_case_train_test_data()
 
     # Use default_log if you do not have json config file for log
