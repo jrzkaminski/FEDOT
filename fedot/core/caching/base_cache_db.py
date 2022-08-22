@@ -25,7 +25,7 @@ class BaseCacheDB:
         self.db_path = db_path or Path(default_fedot_data_dir(), f'cache_{str(uuid.uuid4())}')
         self.db_path = Path(self.db_path).with_suffix(self._db_suffix)
 
-        self._del_prev_temps()
+        # self._del_prev_temps()
 
         self._eff_table = 'effectiveness'
         self.use_stats = use_stats
