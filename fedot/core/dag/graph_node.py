@@ -1,5 +1,5 @@
 from copy import copy
-from typing import List, Optional, Union, Iterable
+from typing import List, Optional, Union, Iterable, Sequence, Callable
 from uuid import uuid4
 
 from fedot.core.utilities.data_structures import UniqueList
@@ -149,3 +149,27 @@ def _descriptive_id_recursive(current_node, visited_nodes=None) -> str:
     full_path_items.append(f'/{node_label}')
     full_path = ''.join(full_path_items)
     return full_path
+
+
+def map_nodes(transform: Callable, nodes: Sequence) -> Sequence:
+    """Maps nodes in dfs-order while respecting node edges.
+
+    :param transform: node transform function (maps node to node)
+    :param nodes: sequence of nodes for mapping
+    :return: sequence of transformed links with preserved relations
+    """
+    mapped_nodes = {}
+
+    def map_impl(node):
+        already_mapped = mapped_nodes.get(id(node))
+        if already_mapped:
+            return already_mapped
+        # map node itself
+        mapped_node = transform(node)
+        # remember it to avoid recursion
+        mapped_nodes[id(node)] = mapped_node
+        # map its children
+        mapped_node.nodes_from = list(map(map_impl, node.nodes_from))
+        return mapped_node
+
+    return list(map(map_impl, nodes))
