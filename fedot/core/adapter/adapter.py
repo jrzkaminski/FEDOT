@@ -2,6 +2,7 @@ from abc import abstractmethod
 from copy import deepcopy
 from typing import TypeVar, Generic, Type, Optional, Dict, Any, Callable, Tuple, Sequence
 
+from fedot.core.dag.graph import Graph
 from fedot.core.log import default_log
 from fedot.core.optimisers.gp_comp.individual import Individual
 from fedot.core.optimisers.gp_comp.operators.operator import PopulationT
@@ -12,7 +13,7 @@ DomainStructureType = TypeVar('DomainStructureType')
 
 
 class BaseOptimizationAdapter(Generic[DomainStructureType]):
-    def __init__(self, base_graph_class: Type[DomainStructureType]):
+    def __init__(self, base_graph_class: Type[DomainStructureType] = Graph):
         self._log = default_log(self)
         self.domain_graph_class = base_graph_class
         self.opt_graph_class = OptGraph
@@ -67,6 +68,16 @@ class BaseOptimizationAdapter(Generic[DomainStructureType]):
     @abstractmethod
     def _restore(self, opt_graph: OptGraph, metadata: Optional[Dict[str, Any]] = None) -> DomainStructureType:
         raise NotImplementedError()
+
+
+class IdentityAdapter(BaseOptimizationAdapter[DomainStructureType]):
+    """Identity adapter that performs no transformation, returning same graphs."""
+
+    def _adapt(self, adaptee: DomainStructureType) -> OptGraph:
+        return adaptee
+
+    def _restore(self, opt_graph: OptGraph, metadata: Optional[Dict[str, Any]] = None) -> DomainStructureType:
+        return opt_graph
 
 
 class DirectAdapter(BaseOptimizationAdapter[DomainStructureType]):

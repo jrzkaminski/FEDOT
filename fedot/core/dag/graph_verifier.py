@@ -1,6 +1,7 @@
 from typing import Sequence, Optional, Callable
 
-from fedot.core.adapter import BaseOptimizationAdapter, DirectAdapter
+from fedot.core.adapter import BaseOptimizationAdapter
+from fedot.core.adapter.adapter import IdentityAdapter
 from fedot.core.dag.graph import Graph
 from fedot.core.log import default_log
 
@@ -11,7 +12,7 @@ VerifierRuleType = Callable[..., bool]
 class GraphVerifier:
     def __init__(self, rules: Sequence[VerifierRuleType] = (),
                  adapter: Optional[BaseOptimizationAdapter] = None):
-        self._adapter = adapter or DirectAdapter()
+        self._adapter = adapter or IdentityAdapter()
         self._rules = rules
         self._log = default_log(self)
 
