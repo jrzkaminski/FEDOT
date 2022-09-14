@@ -47,8 +47,10 @@ class Operation:
             self._eval_strategy.output_mode = kwargs['output_mode']
 
     def description(self, operation_params: dict) -> str:
-        operation_type = self.operation_type
-        return f'n_{operation_type}_{operation_params}'
+        desc = str(self.operation_type)
+        if operation_params and operation_params != DEFAULT_PARAMS_STUB:
+            desc = f'n_{self.operation_type}_{operation_params}'
+        return desc
 
     @property
     def acceptable_task_types(self):

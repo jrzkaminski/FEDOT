@@ -129,7 +129,7 @@ def _descriptive_id_recursive(current_node, visited_nodes=None) -> str:
         # If there is a string: name of operation (as in json repository)
         node_label = str(node_operation)
         if params and params != DEFAULT_PARAMS_STUB:
-            node_label = f'n_{node_label}_{params}'
+            node_label = f'n_{node_operation}_{params}'
     else:
         # If instance of Operation is placed in 'name'
         node_label = node_operation.description(params)
