@@ -38,6 +38,8 @@ class ApiComposer:
         self.preprocessing_cache: Optional[PreprocessingCache] = None
         self.preset_name = None
         self.timer = None
+        # status flag indicating that tuner step was applied
+        self.was_tuned = False
 
     def obtain_metric(self, task: Task, metric: Union[str, Callable]) -> Sequence[MetricType]:
         """Chooses metric to use for quality assessment of pipeline during composition"""
@@ -215,11 +217,11 @@ class ApiComposer:
                                                                                      composer_requirements,
                                                                                      composer_params, log)
         if with_tuning:
-            self.tune_final_pipeline(task, train_data,
-                                     metric_functions[0],
-                                     composer_requirements,
-                                     best_pipeline,
-                                     log)
+            best_pipeline = self.tune_final_pipeline(task, train_data,
+                                                     metric_functions[0],
+                                                     composer_requirements,
+                                                     best_pipeline,
+                                                     log)
         # enforce memory cleaning
         gc.collect()
 
@@ -290,6 +292,7 @@ class ApiComposer:
             with self.timer.launch_tuning():
                 log.info(f'Hyperparameters tuning started with {timeout_for_tuning} sec. timeout')
                 tuned_pipeline = tuner.tune(pipeline_gp_composed)
+                self.was_tuned = True
                 log.info('Hyperparameters tuning finished')
         else:
             log.info(f'Time for pipeline composing was {str(self.timer.composing_spend_time)}.\n'
