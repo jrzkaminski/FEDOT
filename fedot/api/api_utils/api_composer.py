@@ -289,15 +289,15 @@ class ApiComposer:
         if self.timer.have_time_for_tuning():
             # Tune all nodes in the pipeline
             with self.timer.launch_tuning():
-                log.info(f'Hyperparameters tuning started with {timeout_for_tuning} sec. timeout')
+                self.log.info(f'Hyperparameters tuning started with {timeout_for_tuning} sec. timeout')
                 tuned_pipeline = tuner.tune(pipeline_gp_composed)
                 self.was_tuned = True
-                log.info('Hyperparameters tuning finished')
+                self.log.info('Hyperparameters tuning finished')
         else:
-            log.info(f'Time for pipeline composing was {str(self.timer.composing_spend_time)}.\n'
-                     f'The remaining {max(0, timeout_for_tuning)} seconds are not enough '
-                     f'to tune the hyperparameters.')
-            log.info('Composed pipeline returned without tuning.')
+            self.log.info(f'Time for pipeline composing was {str(self.timer.composing_spend_time)}.\n'
+                          f'The remaining {max(0, timeout_for_tuning)} seconds are not enough '
+                          f'to tune the hyperparameters.')
+            self.log.info('Composed pipeline returned without tuning.')
             tuned_pipeline = pipeline_gp_composed
 
         return tuned_pipeline
