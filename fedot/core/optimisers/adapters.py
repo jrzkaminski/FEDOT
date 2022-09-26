@@ -84,7 +84,7 @@ class PipelineAdapter(BaseOptimizationAdapter[Pipeline, Node]):
                                   'PrimaryNode or SecondaryNode.')
             else:
                 content = {'name': str(node.operation),
-                           'params': node.custom_params,
+                           'params': node.parameters,
                            'metadata': node.metadata}
 
                 node.__class__ = OptNode
