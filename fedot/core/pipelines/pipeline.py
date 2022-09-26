@@ -120,7 +120,6 @@ class Pipeline(GraphDelegate, Serializable):
 
         Args:
             input_data: data used for operations training
-            use_fitted: flag defining whether to use saved information about previous fits or not
             time_constraint: time constraint for operations fitting (in seconds)
             n_jobs: number of threads for nodes fitting
 
