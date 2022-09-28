@@ -14,7 +14,7 @@ from fedot.core.optimisers.gp_comp.gp_params import GPGraphOptimizerParameters
 from fedot.core.optimisers.gp_comp.pipeline_composer_requirements import PipelineComposerRequirements
 from fedot.core.optimisers.initial_graphs_generator import InitialPopulationGenerator, GenerationFunction
 from fedot.core.optimisers.objective.objective import Objective
-from fedot.core.optimisers.opt_history import OptHistory, log_to_history
+from fedot.core.optimisers.opt_history import OptHistory, log_to_history, history_generations_context
 from fedot.core.optimisers.optimizer import GraphOptimizer, GraphOptimizerParameters, GraphGenerationParams
 from fedot.core.pipelines.pipeline import Pipeline
 from fedot.core.pipelines.pipeline_graph_generation_params import get_pipeline_generation_params
@@ -165,6 +165,7 @@ class ComposerBuilder:
             history.clean_results(self._full_history_dir)
             history_callback = partial(log_to_history, history=history, save_dir=self._full_history_dir)
             optimiser.set_optimisation_callback(history_callback)
+            optimiser.optimise = history_generations_context(history)(optimiser.optimise)
 
         composer = self.composer_cls(optimiser,
                                      self.composer_requirements,

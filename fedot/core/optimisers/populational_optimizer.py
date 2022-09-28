@@ -6,11 +6,11 @@ from tqdm import tqdm
 from fedot.core.dag.graph import Graph
 from fedot.core.optimisers.archive import GenerationKeeper
 from fedot.core.optimisers.gp_comp.evaluation import MultiprocessingDispatcher
-from fedot.core.optimisers.gp_comp.operators.operator import PopulationT
 from fedot.core.optimisers.gp_comp.pipeline_composer_requirements import PipelineComposerRequirements
 from fedot.core.optimisers.graph import OptGraph
 from fedot.core.optimisers.objective import GraphFunction, ObjectiveFunction
 from fedot.core.optimisers.objective.objective import Objective
+from fedot.core.optimisers.opt_history import Generation
 from fedot.core.optimisers.optimizer import GraphGenerationParams, GraphOptimizer, GraphOptimizerParameters
 from fedot.core.optimisers.timer import OptimisationTimer
 from fedot.core.pipelines.pipeline import Pipeline
@@ -43,7 +43,7 @@ class PopulationalOptimizer(GraphOptimizer):
                  graph_generation_params: GraphGenerationParams,
                  graph_optimizer_params: Optional['GraphOptimizerParameters'] = None):
         super().__init__(objective, initial_graphs, requirements, graph_generation_params, graph_optimizer_params)
-        self.population = None
+        self.population: Optional[Generation] = None
         self.generations = GenerationKeeper(self.objective, keep_n_best=requirements.keep_n_best)
         self.timer = OptimisationTimer(timeout=self.requirements.timeout)
         self.eval_dispatcher = MultiprocessingDispatcher(graph_adapter=graph_generation_params.adapter,
@@ -104,11 +104,11 @@ class PopulationalOptimizer(GraphOptimizer):
         raise NotImplementedError()
 
     @abstractmethod
-    def _evolve_population(self, *args, **kwargs) -> PopulationT:
+    def _evolve_population(self, *args, **kwargs) -> Generation:
         """ Method realizing full evolution cycle """
         raise NotImplementedError()
 
-    def _update_population(self, next_population: PopulationT):
+    def _update_population(self, next_population: Generation):
         self.generations.append(next_population)
         self._optimisation_callback(next_population, self.generations)
         self.population = next_population

@@ -1,4 +1,5 @@
 from copy import copy, deepcopy
+from functools import partial, reduce
 from random import choice
 from typing import Sequence, Callable
 
@@ -17,7 +18,7 @@ from fedot.core.optimisers.gp_comp.parameters.operators_prob import init_adaptiv
 from fedot.core.optimisers.gp_comp.parameters.population_size import init_adaptive_pop_size, PopulationSize
 from fedot.core.optimisers.gp_comp.pipeline_composer_requirements import PipelineComposerRequirements
 from fedot.core.optimisers.objective.objective import Objective
-from fedot.core.optimisers.opt_history import Individual
+from fedot.core.optimisers.opt_history import Individual, Generation
 from fedot.core.optimisers.optimizer import GraphGenerationParams
 from fedot.core.optimisers.populational_optimizer import PopulationalOptimizer, EvaluationAttemptsError
 
@@ -62,12 +63,20 @@ class EvoGraphOptimizer(PopulationalOptimizer):
     def _initial_population(self, evaluator: Callable):
         """ Initializes the initial population """
         # Adding of initial assumptions to history as zero generation
-        self._update_population(evaluator(self.initial_individuals))
+        self.initial_individuals = Generation(self.initial_individuals, generation_num=self.generations.generation_num,
+                                              label='initial_assumptions')
+        self.initial_individuals.apply(evaluator, inplace=True)
+        self._update_population(self.initial_individuals)
 
         if len(self.initial_individuals) < self.graph_optimizer_params.pop_size:
-            self.initial_individuals = self._extend_population(self.initial_individuals)
+            # In case there are too few of initial assumptions.
+            self.initial_individuals = Generation(self.initial_individuals,
+                                                  generation_num=self.generations.generation_num,
+                                                  label='extended_initial_assumptions')
+            self.initial_individuals.apply(self._extend_population, inplace=True)
+            self.initial_individuals.apply(evaluator, inplace=True)
             # Adding of extended population to history
-            self._update_population(evaluator(self.initial_individuals))
+            self._update_population(self.initial_individuals)
 
     def _extend_population(self, initial_individuals: PopulationT) -> PopulationT:
         iter_num = 0
@@ -91,16 +100,23 @@ class EvoGraphOptimizer(PopulationalOptimizer):
         self.mutation.update_requirements(requirements=self.requirements)
         return initial_individuals
 
-    def _evolve_population(self, evaluator: Callable) -> PopulationT:
+    def _evolve_population(self, evaluator: Callable) -> Generation:
         """ Method realizing full evolution cycle """
         self._update_requirements()
-
-        individuals_to_select = self.regularization(self.population, evaluator)
-        selected_individuals = self.selection(individuals_to_select)
-        new_population = self._spawn_evaluated_population(selected_individuals=selected_individuals,
-                                                          evaluator=evaluator)
-        new_population = self.inheritance(self.population, new_population)
-        new_population = self.elitism(self.generations.best_individuals, new_population)
+        # Create the corresponding generation.
+        gen_num = self.generations.generation_num
+        self.population = Generation(self.population, generation_num=gen_num, label=f'evo_gen_{gen_num}')
+        # Prepare actions.
+        regularization = partial(self.regularization, evaluator=evaluator)
+        selection = self.selection
+        evaluation = partial(self._spawn_evaluated_population, evaluator=evaluator)
+        inheritance = partial(self.inheritance, list(self.population))
+        elitism = partial(self.elitism, self.generations.best_individuals)
+        # Chain the actions into one function recursively.  TODO: Possibly move this into the `Generation` class?
+        actions = (regularization, selection, evaluation, inheritance, elitism)
+        chained_actions = partial(reduce, lambda r, f: f(r), actions)  # f_n(...(f_1(f_0(x))))
+        # Apply the actions.
+        new_population = self.population.apply(chained_actions)
 
         return new_population
 
