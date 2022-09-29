@@ -109,7 +109,6 @@ class PopulationalOptimizer(GraphOptimizer):
         raise NotImplementedError()
 
     def _update_population(self, next_population: PopulationT):
-        self._update_native_generation_numbers(next_population)
         self.generations.append(next_population)
         self._optimisation_callback(next_population, self.generations)
         self.population = next_population
@@ -118,10 +117,6 @@ class PopulationalOptimizer(GraphOptimizer):
         self.log.info(f'Best individuals: {str(self.generations)}')
         self.log.info(f'no improvements for {self.generations.stagnation_duration} iterations')
         self.log.info(f'spent time: {round(self.timer.minutes_from_start, 1)} min')
-
-    def _update_native_generation_numbers(self, population: PopulationT):
-        for individual in population:
-            individual.set_native_generation(self.current_generation_num)
 
     @property
     def _progressbar(self):

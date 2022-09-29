@@ -12,9 +12,9 @@ from joblib import Parallel, delayed
 from fedot.core.dag.graph import Graph
 from fedot.core.log import Log, default_log
 from fedot.core.optimisers.adapters import BaseOptimizationAdapter
-from fedot.core.optimisers.gp_comp.individual import Individual
 from fedot.core.optimisers.gp_comp.operators.operator import EvaluationOperator, PopulationT
 from fedot.core.optimisers.objective import GraphFunction, ObjectiveFunction
+from fedot.core.optimisers.opt_history import Individual
 from fedot.core.optimisers.timer import Timer, get_forever_timer
 from fedot.core.pipelines.verification import verifier_for_task
 from fedot.remote.remote_evaluator import RemoteEvaluator

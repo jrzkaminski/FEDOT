@@ -31,10 +31,8 @@ class Serializer(JSONEncoder, JSONDecoder):
             from fedot.core.dag.graph import Graph
             from fedot.core.dag.graph_node import GraphNode
             from fedot.core.operations.operation import Operation
-            from fedot.core.optimisers.gp_comp.individual import Individual
+            from fedot.core.optimisers.opt_history import Individual, OptHistory, ParentOperator
             from fedot.core.optimisers.graph import OptGraph, OptNode
-            from fedot.core.optimisers.opt_history import OptHistory
-            from fedot.core.optimisers.gp_comp.individual import ParentOperator
             from fedot.core.utilities.data_structures import ComparableEnum
 
             from .coders import (

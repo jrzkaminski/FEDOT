@@ -5,7 +5,6 @@ from typing import Sequence, Callable
 from fedot.core.constants import MAXIMAL_ATTEMPTS_NUMBER, EVALUATION_ATTEMPTS_NUMBER
 from fedot.core.dag.graph import Graph
 from fedot.core.optimisers.gp_comp.gp_params import GPGraphOptimizerParameters
-from fedot.core.optimisers.gp_comp.individual import Individual
 from fedot.core.optimisers.gp_comp.operators.crossover import Crossover
 from fedot.core.optimisers.gp_comp.operators.elitism import Elitism
 from fedot.core.optimisers.gp_comp.operators.inheritance import Inheritance
@@ -18,6 +17,7 @@ from fedot.core.optimisers.gp_comp.parameters.operators_prob import init_adaptiv
 from fedot.core.optimisers.gp_comp.parameters.population_size import init_adaptive_pop_size, PopulationSize
 from fedot.core.optimisers.gp_comp.pipeline_composer_requirements import PipelineComposerRequirements
 from fedot.core.optimisers.objective.objective import Objective
+from fedot.core.optimisers.opt_history import Individual
 from fedot.core.optimisers.optimizer import GraphGenerationParams
 from fedot.core.optimisers.populational_optimizer import PopulationalOptimizer, EvaluationAttemptsError
 

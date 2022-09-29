@@ -1,6 +1,6 @@
 from typing import Any, Dict, Type
 
-from fedot.core.optimisers.gp_comp.individual import ParentOperator
+from fedot.core.optimisers.opt_history import ParentOperator
 from . import any_from_json, any_to_json
 
 

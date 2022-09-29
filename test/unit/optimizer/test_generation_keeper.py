@@ -2,12 +2,11 @@ from typing import Sequence
 
 from fedot.core.optimisers.archive import GenerationKeeper
 from fedot.core.optimisers.fitness import Fitness, MultiObjFitness, null_fitness
-from fedot.core.optimisers.gp_comp.individual import Individual
 from fedot.core.optimisers.gp_comp.operators.operator import PopulationT
 from fedot.core.optimisers.graph import OptGraph, OptNode
 from fedot.core.optimisers.objective.objective import Objective
+from fedot.core.optimisers.opt_history import Individual
 from fedot.core.repository.quality_metrics_repository import ComplexityMetricsEnum, RegressionMetricsEnum
-from fedot.core.utils import DEFAULT_PARAMS_STUB
 
 
 def create_individual(fitness: Fitness = None) -> Individual:
