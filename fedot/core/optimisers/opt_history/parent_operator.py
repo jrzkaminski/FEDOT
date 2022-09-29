@@ -4,7 +4,7 @@ from dataclasses import dataclass, field
 from typing import Tuple, Union
 from uuid import uuid4
 
-from fedot.core.optimisers.opt_history import Individual
+from fedot.core.optimisers.opt_history import Individual, IndividualsList
 
 
 @dataclass(frozen=True)
@@ -18,7 +18,7 @@ class ParentOperator:
         if isinstance(self.operators, str):
             object.__setattr__(self, 'operators', (self.operators,))
         if isinstance(self.parent_individuals, Individual):
-            object.__setattr__(self, 'parent_individuals', (self.parent_individuals,))
+            object.__setattr__(self, 'parent_individuals', IndividualsList([self.parent_individuals]))
 
     def __repr__(self):
         return (f'<ParentOperator {self.uid} | type: {self.type_} | operators: {self.operators} '
