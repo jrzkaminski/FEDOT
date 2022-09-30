@@ -229,12 +229,12 @@ class EvoGraphOptimiser(GraphOptimiser):
                 new_population = evaluator(new_population)
 
                 # BN niching
-                check_nich = []
-                if type(self.parameters.niching)==list and len(self.parameters.niching)!=0:
-                    for ind in new_population:
-                        if round(ind.fitness.value[0],6) not in self.parameters.niching:
-                            check_nich.append(ind)     
-                    new_population = check_nich
+                # check_nich = []
+                # if type(self.parameters.niching)==list and len(self.parameters.niching)!=0:
+                #     for ind in new_population:
+                #         if round(ind.fitness.value[0],6) not in self.parameters.niching:
+                #             check_nich.append(ind)     
+                #     new_population = check_nich
                                                
 
                 # print([i.fitness for i in new_population])
