@@ -17,7 +17,7 @@ from fedot.core.optimisers.gp_comp.operators.selection import SelectionTypesEnum
 from fedot.core.optimisers.gp_comp.gp_optimiser import EvoGraphOptimiser, GPGraphOptimiserParameters, GeneticSchemeTypesEnum
 from fedot.core.optimisers.adapters import DirectAdapter
 from fedot.core.dag.verification_rules import has_no_cycle, has_no_self_cycled_nodes
-from examples.preprocessing_utils import get_blacklist, get_edges_of_local_structures
+from examples.preprocessing_utils import get_edges_of_local_structures
 from fedot.core.composer.gp_composer.gp_composer import PipelineComposerRequirements
 import bamt.Preprocessors as pp
 import bamt.Networks as Nets
