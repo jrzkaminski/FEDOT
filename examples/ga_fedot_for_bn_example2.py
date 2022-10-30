@@ -190,7 +190,7 @@ def run_example():
 
     global blacklist, local_edges
     local_edges, blacklist = get_edges_of_local_structures(data,
-                                                           datatype='discrete')
+                                                           datatype='continuous')
 
     print('Local edges:', local_edges)
 
@@ -250,25 +250,21 @@ def run_example():
 
     evolutionary_edges = optimized_graph.operator.get_all_edges()
 
-    evolutionary_edges = [list(edge) for edge in evolutionary_edges]
+    all_edges = local_edges
 
-    all_edges = local_edges + evolutionary_edges
-
-    # optimized_graph.show()
+    optimized_graph.show()
 
     print("Evo edges:", evolutionary_edges)
 
-    print("All edges:", all_edges)
-    
     return all_edges
 
 
 if __name__ == '__main__':
 
     # файл с исходными данными (должен лежать в 'examples/data/')
-    file = 'hailfinder'
+    file = 'arth150'
     # размер популяции
-    pop_size = 100
+    pop_size = 10
     # количество поколений
     n_generation = 50
     # вероятность кроссовера
