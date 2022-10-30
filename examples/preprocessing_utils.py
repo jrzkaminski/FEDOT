@@ -65,6 +65,25 @@ def mutual_info_clustering(data: pd.DataFrame, cluster_number: int = 2) -> dict:
     print(clusters)
     return clusters
 
+def mutual_info_clustering_with_cap(data: pd.DataFrame, cluster_number: int = 2, max_var_number_in_cluster: int = 20) -> dict:
+    """
+    Clustering of features based on mutual information
+    :param data: data for clustering
+    :param cluster_number: number of clusters
+    :param max_var_number_in_cluster: maximum number of variables in cluster
+    :return: dictionary with clusters
+    """
+    proximity_matrix = get_proximity_matrix(data, proximity_metric="MI")
+    proximity_matrix = 1 - proximity_matrix
+    proximity_matrix = np.nan_to_num(proximity_matrix)
+    linkage = spc.linkage(proximity_matrix, method='average')
+    clusters = spc.fcluster(linkage, cluster_number, criterion='maxclust')
+    clusters = {i: list(data.columns[np.where(clusters == i)[0]]) for i in range(1, cluster_number + 1)}
+    for key, value in clusters.items():
+        if len(value) > max_var_number_in_cluster:
+            clusters[key] = value[:max_var_number_in_cluster]
+    print(clusters)
+    return clusters
 
 def varclushi_clustering(data: pd.DataFrame, maxeigval2: int = 1, maxclus: int = 4) -> dict:
     data = encode_categorical_features(data)
