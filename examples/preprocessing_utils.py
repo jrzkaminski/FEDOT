@@ -9,6 +9,7 @@ from bamt.utils.MathUtils import get_proximity_matrix
 from sklearn import preprocessing
 from sklearn.metrics import mutual_info_score
 from sklearn.cluster import AgglomerativeClustering
+from sklearn.cluster import KMeans
 import sys
 parentdir = '/Users/jerzykaminski/Documents/GitHub/FEDOT/'
 bamtdir = '/Users/jerzykaminski/Documents/GitHub/BAMT/'
@@ -26,28 +27,6 @@ def encode_categorical_features(data: pd.DataFrame) -> pd.DataFrame:
             le = preprocessing.LabelEncoder()
             data[col] = le.fit_transform(data[col])
     return data
-
-
-def count(D: list, n_clusters: int):
-    model = AgglomerativeClustering(n_clusters=n_clusters, affinity='precomputed', linkage='single')
-    model = model.fit_predict(D)
-    res_dict = {}
-    for i, val in enumerate(model):
-        if val in res_dict:
-            res_dict[val].append(i)
-        else:
-            res_dict[val] = [i]
-    count = 0
-    for val in res_dict.values():
-        if count < len(val):
-            count = len(val)
-    return count
-
-def opt_cluster(D: list):
-    max_cluster = [count(D, i) for i in range(1, len(D) + 1)]
-    dim_space = [max(i, val) for i, val in enumerate(max_cluster)]
-    #Optimal number of cluster
-    return np.argmin(dim_space) + 1
 
 def mutual_info_clustering(data: pd.DataFrame, cluster_number: int = 2) -> dict:
     """
