@@ -11,8 +11,8 @@ from sklearn.metrics import mutual_info_score
 from sklearn.cluster import AgglomerativeClustering
 from sklearn.cluster import KMeans
 import sys
-parentdir = '/Users/jerzykaminski/Documents/GitHub/FEDOT/'
-bamtdir = '/Users/jerzykaminski/Documents/GitHub/BAMT/'
+parentdir = '/home/jerzy/Documents/GitHub/GitHub/FEDOT'
+bamtdir = '/home/jerzy/Documents/GitHub/GitHub/BAMT'
 sys.path.insert(0, parentdir)
 sys.path.insert(0, bamtdir)
 

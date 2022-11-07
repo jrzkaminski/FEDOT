@@ -8,8 +8,8 @@ from sklearn import preprocessing
 from sklearn.cluster import KMeans
 import sys
 
-parentdir = '/Users/jerzykaminski/Documents/GitHub/FEDOT/'
-bamtdir = '/Users/jerzykaminski/Documents/GitHub/BAMT/'
+parentdir = '/home/jerzy/Documents/GitHub/GitHub/FEDOT'
+bamtdir = '/home/jerzy/Documents/GitHub/GitHub/BAMT'
 sys.path.insert(0, parentdir)
 sys.path.insert(0, bamtdir)
 
@@ -34,11 +34,10 @@ def varclushi_clustering(data: pd.DataFrame, maxeigval2: int = 1, maxclus: int =
     clusters = {}
     for i in range(max(clusters_df['Cluster'])+1):
         clusters[i] = list(clusters_df[clusters_df['Cluster'] == i]['Variable'])
-    # print(clusters)
     return clusters
 
 
-class divided_bn:
+class DividedBN:
 
     def __init__(self, 
                  data: pd.DataFrame,
@@ -51,18 +50,19 @@ class divided_bn:
         """
         self.data = data
         self.max_local_structures = max_local_structures
-        self.local_structures = {}
+        self.local_structures_nodes = {}
+        self.local_structures_edges = {}
         self.hidden_nodes_clusters = hidden_nodes_clusters
         self.hidden_nodes = {}
         self.local_structures_info = {}
 
-    def set_local_structures(self, 
-                             data: pd.DataFrame,
+    def set_local_structures(self,
+                             data,
                              datatype: str = 'mixed',
                              has_logit: bool = True,
                              use_mixture: bool = True,
                              maxeigval2: int = 1,
-                             parallel_count: int = 4) -> list:
+                             parallel_count: int = 4):
         """_summary_
 
         Args:
@@ -79,9 +79,7 @@ class divided_bn:
 
         from joblib import Parallel, delayed
 
-        self.local_structures = varclushi_clustering(data, maxeigval2=maxeigval2, maxclus=self.max_local_structures)
-
-        local_structures_edges = []
+        self.local_structures_nodes = varclushi_clustering(data, maxeigval2=maxeigval2, maxclus=self.max_local_structures)
 
         # def wrapper(data: pd.DataFrame,
         #             has_logit: bool = True,
@@ -102,13 +100,12 @@ class divided_bn:
         # Parallel(n_jobs=parallel_count)(delayed(wrapper)(data=data, has_logit=has_logit, use_mixture=use_mixture)(range(n)) for n in clusters.values())
 
 
-        for cluster in self.local_structures.values():
-            data_cluster = data[cluster]
+        for key in self.local_structures_nodes:
+            data_cluster = self.data[self.local_structures_nodes[key]]
             encoder = preprocessing.LabelEncoder()
             discretizer = preprocessing.KBinsDiscretizer(n_bins=5, encode='ordinal', strategy='quantile')
             p = pp.Preprocessor([('encoder', encoder), ('discretizer', discretizer)])
-            discretized_data, _ = p.apply(data_cluster)
-            local_discretized_data = discretized_data
+            local_discretized_data, _ = p.apply(data_cluster)
             if datatype == "mixed":
                 bn = Nets.HybridBN(has_logit=has_logit, use_mixture=use_mixture)
             elif datatype == "discrete":
@@ -120,12 +117,17 @@ class divided_bn:
             bn.add_edges(local_discretized_data,  scoring_function=('K2', K2Score))
             edges = bn.edges
             local_structure_info = bn.get_info()
-            local_structures_edges += edges
-            self.local_structures_info[cluster] = local_structure_info
+            self.local_structures_edges[key] = edges
+            self.local_structures_info[key] = local_structure_info
 
-    def set_hidden_nodes(self):
+    def set_hidden_nodes(self, data):
+
         k_means = KMeans(n_clusters=self.hidden_nodes_clusters)
-        for cluster in self.local_structures.values():
-            data_cluster = self.data[cluster]
+
+        for key in self.local_structures_nodes:
+            data_cluster = data[self.local_structures_nodes[key]]
             k_means.fit(data_cluster)
-            self.hidden_nodes[cluster] = k_means.fit_predict(data_cluster)
+            self.hidden_nodes[key] = k_means.fit_predict(data_cluster)
+
+        
+

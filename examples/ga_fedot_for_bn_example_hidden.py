@@ -1,7 +1,7 @@
 import sys
 from typing import Optional, Union, List
-parentdir = 'C:\\Users\\Jerzy\\Documents\\GitHub\\FEDOT'
-bamtdir = 'C:\\Users\\Jerzy\\Documents\\GitHub\\BAMT'
+parentdir = '/home/jerzy/Documents/GitHub/GitHub/FEDOT'
+bamtdir = '/home/jerzy/Documents/GitHub/GitHub/BAMT'
 sys.path.insert(0, parentdir)
 sys.path.insert(0, bamtdir)
 
@@ -17,7 +17,7 @@ from fedot.core.optimisers.gp_comp.operators.selection import SelectionTypesEnum
 from fedot.core.optimisers.gp_comp.gp_optimiser import EvoGraphOptimiser, GPGraphOptimiserParameters, GeneticSchemeTypesEnum
 from fedot.core.optimisers.adapters import DirectAdapter
 from fedot.core.dag.verification_rules import has_no_cycle, has_no_self_cycled_nodes
-from examples.preprocessing_utils import get_edges_of_local_structures
+from examples.divided_bn import DividedBN
 from fedot.core.composer.gp_composer.gp_composer import PipelineComposerRequirements
 import bamt.Preprocessors as pp
 import bamt.Networks as Nets
@@ -55,7 +55,7 @@ def custom_metric(graph: CustomGraphModel, data: pd.DataFrame):
 
     bn_model = BayesianNetwork(struct)
     bn_model.add_nodes_from(data.columns)
-    bn_model.add_edges_from(local_edges)
+    # bn_model.add_edges_from(local_edges)
 
     score = K2Score(data).score(bn_model)
     return [-score]
@@ -167,17 +167,6 @@ def _has_no_duplicates(graph):
         raise ValueError('Custom graph has duplicates')
     return True
 
-# правило проверки наличия узлов из blacklist
-
-def _has_no_blacklist(graph):
-    global blacklist
-    # convert list of tuples to list of lists
-    for edge in graph.operator.get_all_edges():
-        edge = list(edge)
-        if edge in blacklist:
-            raise ValueError('Custom graph has blacklisted edges')
-    return True
-
 def run_example():
 
     data = pd.read_csv('examples/data/'+file+'.csv')
@@ -188,25 +177,44 @@ def run_example():
     data.reset_index(inplace=True, drop=True)
 
 
-    global blacklist, local_edges
-    local_edges, blacklist = get_edges_of_local_structures(data,
-                                                           datatype='continuous')
+    # initialize divided_bn
+
+    divided_bn = DividedBN(data = data)
+
+    divided_bn.set_local_structures(data, datatype="continuous")
+
+    local_edges = divided_bn.local_structures_edges
+
+    local_nodes = divided_bn.local_structures_nodes
+
+    print('local nodes', local_nodes)
 
     print('Local edges:', local_edges)
 
-    vertices = list(data.columns)
+
+    divided_bn.set_hidden_nodes(data = data)
+
+    print('Hidden nodes:', divided_bn.hidden_nodes)
+
+    bns_info = divided_bn.local_structures_info 
+
+    hidden_df = pd.DataFrame.from_dict(divided_bn.hidden_nodes)
+
+    print('Hidden df:', hidden_df)
+
+    vertices = list(hidden_df.columns)
 
     encoder = preprocessing.LabelEncoder()
     discretizer = preprocessing.KBinsDiscretizer(n_bins=5, encode='ordinal', strategy='quantile')
     p = pp.Preprocessor([('encoder', encoder), ('discretizer', discretizer)])
-    discretized_data, _ = p.apply(data)
+    discretized_data, _ = p.apply(hidden_df)
 
     # словарь: {имя_узла: уникальный_номер_узла}
     global dir_of_nodes
-    dir_of_nodes = {data.columns[i]: i for i in range(len(data.columns))}
+    dir_of_nodes = {hidden_df.columns[i]: i for i in range(len(hidden_df.columns))}
 
     # правила для байесовских сетей: нет петель, нет циклов, нет повторяющихся узлов
-    rules = [has_no_self_cycled_nodes, has_no_cycle, _has_no_duplicates, _has_no_blacklist]
+    rules = [has_no_self_cycled_nodes, has_no_cycle, _has_no_duplicates]
 
     # задаем для оптимизатора fitness-функцию
     objective = Objective(custom_metric)

@@ -1,7 +1,7 @@
 import sys
 from typing import Optional, Union, List
-parentdir = 'C:\\Users\\Jerzy\\Documents\\GitHub\\FEDOT'
-bamtdir = 'C:\\Users\\Jerzy\\Documents\\GitHub\\BAMT'
+parentdir = '/home/jerzy/Documents/GitHub/GitHub/FEDOT'
+bamtdir = '/home/jerzy/Documents/GitHub/GitHub/BAMT'
 sys.path.insert(0, parentdir)
 sys.path.insert(0, bamtdir)
 
