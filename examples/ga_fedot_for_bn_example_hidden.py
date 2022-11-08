@@ -45,19 +45,28 @@ class CustomGraphNode(OptNode):
 def custom_metric(graph: CustomGraphModel, data: pd.DataFrame):
     score = 0
     graph_nx, labels = graph_structure_as_nx_graph(graph)
-    struct = []
+    hidden_struct = []
     for pair in graph_nx.edges():
         l1 = str(labels[pair[0]])
         l2 = str(labels[pair[1]])
-        struct.append([l1, l2])
+        hidden_struct.append([l1, l2])
 
-    global local_edges
+    global local_edges, root_nodes, child_nodes, initial_df
 
-    bn_model = BayesianNetwork(struct)
-    bn_model.add_nodes_from(data.columns)
-    # bn_model.add_edges_from(local_edges)
+    external_edges = []
 
-    score = K2Score(data).score(bn_model)
+    for meta_edge in hidden_struct:
+        for root_node in root_nodes[meta_edge[0]]:
+            for child_node in child_nodes[meta_edge[1]]:
+                external_edges.append([root_node, child_node])
+
+    print(external_edges)
+
+    bn_model = BayesianNetwork(external_edges)
+    bn_model.add_nodes_from(initial_df.columns)
+    bn_model.add_edges_from(local_edges)
+
+    score = K2Score(initial_df).score(bn_model)
     return [-score]
 
 # задаем кроссовер (обмен ребрами)
@@ -177,6 +186,10 @@ def run_example():
     data.reset_index(inplace=True, drop=True)
 
 
+    global local_edges, root_nodes, child_nodes, initial_df
+
+    initial_df = data
+
     # initialize divided_bn
 
     divided_bn = DividedBN(data = data)
@@ -185,18 +198,11 @@ def run_example():
 
     local_edges = divided_bn.local_structures_edges
 
-    local_nodes = divided_bn.local_structures_nodes
-
-    print('local nodes', local_nodes)
-
     print('Local edges:', local_edges)
-
 
     divided_bn.set_hidden_nodes(data = data)
 
     print('Hidden nodes:', divided_bn.hidden_nodes)
-
-    bns_info = divided_bn.local_structures_info 
 
     hidden_df = pd.DataFrame.from_dict(divided_bn.hidden_nodes)
 
