@@ -202,6 +202,12 @@ def run_example():
 
     print('Hidden df:', hidden_df)
 
+    root_nodes = divided_bn.root_nodes
+    child_nodes = divided_bn.child_nodes
+
+    print('Root nodes:', root_nodes)
+    print('Child nodes:', child_nodes)
+
     vertices = list(hidden_df.columns)
 
     encoder = preprocessing.LabelEncoder()

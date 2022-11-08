@@ -55,6 +55,8 @@ class DividedBN:
         self.hidden_nodes_clusters = hidden_nodes_clusters
         self.hidden_nodes = {}
         self.local_structures_info = {}
+        self.root_nodes = {}
+        self.child_nodes = {}
 
     def set_local_structures(self,
                              data,
@@ -119,6 +121,21 @@ class DividedBN:
             local_structure_info = bn.get_info()
             self.local_structures_edges[key] = edges
             self.local_structures_info[key] = local_structure_info
+            self.root_nodes[key] = []
+            self.child_nodes[key] = []
+            list_of_all_parents = []
+            # merge all lists in pandas column into one list
+            for i in range(len(local_structure_info)):
+                list_of_all_parents += local_structure_info['parents'][i]
+            for node in local_structure_info['name']:
+                if len(local_structure_info[local_structure_info['name'] == node]['parents']) == 0:
+                    self.root_nodes[key].append(node)
+                if node not in list_of_all_parents:
+                    self.child_nodes[key].append(str(node))
+                
+                    
+
+
 
     def set_hidden_nodes(self, data):
 
