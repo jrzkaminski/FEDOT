@@ -45,28 +45,16 @@ class CustomGraphNode(OptNode):
 def custom_metric(graph: CustomGraphModel, data: pd.DataFrame):
     score = 0
     graph_nx, labels = graph_structure_as_nx_graph(graph)
-    hidden_struct = []
+    struct = []
     for pair in graph_nx.edges():
         l1 = str(labels[pair[0]])
         l2 = str(labels[pair[1]])
-        hidden_struct.append([l1, l2])
+        struct.append([l1, l2])
 
-    global local_edges, root_nodes, child_nodes, initial_df
+    bn_model = BayesianNetwork(struct)
+    bn_model.add_nodes_from(data.columns)
 
-    external_edges = []
-
-    for meta_edge in hidden_struct:
-        for root_node in root_nodes[meta_edge[0]]:
-            for child_node in child_nodes[meta_edge[1]]:
-                external_edges.append([root_node, child_node])
-
-    print(external_edges)
-
-    bn_model = BayesianNetwork(external_edges)
-    bn_model.add_nodes_from(initial_df.columns)
-    bn_model.add_edges_from(local_edges)
-
-    score = K2Score(initial_df).score(bn_model)
+    score = K2Score(data).score(bn_model)
     return [-score]
 
 # задаем кроссовер (обмен ребрами)
@@ -192,9 +180,9 @@ def run_example():
 
     # initialize divided_bn
 
-    divided_bn = DividedBN(data = data)
+    divided_bn = DividedBN(data = data, max_local_structures=20)
 
-    divided_bn.set_local_structures(data, datatype="continuous")
+    divided_bn.set_local_structures(data, datatype="discrete")
 
     local_edges = divided_bn.local_structures_edges
 
@@ -205,6 +193,8 @@ def run_example():
     print('Hidden nodes:', divided_bn.hidden_nodes)
 
     hidden_df = pd.DataFrame.from_dict(divided_bn.hidden_nodes)
+
+    hidden_df.columns = hidden_df.columns.astype(str)
 
     print('Hidden df:', hidden_df)
 
@@ -270,11 +260,23 @@ def run_example():
 
     evolutionary_edges = optimized_graph.operator.get_all_edges()
 
-    all_edges = local_edges
-
     optimized_graph.show()
 
-    print("Evo edges:", evolutionary_edges)
+    external_edges = []
+
+    local_edges_merged = []
+
+    # for key in local_edges:
+    #     local_edges_merged += local_edges[key]
+
+    # for meta_edge in evolutionary_edges:
+    #     for root_node in root_nodes[meta_edge[0]]:
+    #         for child_node in child_nodes[meta_edge[1]]:
+    #             external_edges.append([root_node, child_node])
+
+    all_edges = local_edges_merged + external_edges
+
+    print("Evo edges:", all_edges)
 
     return all_edges
 
@@ -282,7 +284,7 @@ def run_example():
 if __name__ == '__main__':
 
     # файл с исходными данными (должен лежать в 'examples/data/')
-    file = 'arth150'
+    file = 'pigs'
     # размер популяции
     pop_size = 10
     # количество поколений
