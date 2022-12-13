@@ -1,7 +1,8 @@
 import sys
 from typing import Optional, Union, List
-parentdir = '/home/jerzy/Documents/GitHub/GitHub/FEDOT'
-bamtdir = '/home/jerzy/Documents/GitHub/GitHub/BAMT'
+
+parentdir = '/Users/jerzypro/Documents/GitHub/FEDOT/'
+bamtdir = '/Users/jerzypro/Documents/GitHub/BAMT'
 sys.path.insert(0, parentdir)
 sys.path.insert(0, bamtdir)
 
@@ -14,7 +15,8 @@ from fedot.core.optimisers.graph import OptGraph, OptNode
 from fedot.core.optimisers.objective.objective_eval import ObjectiveEvaluate
 from fedot.core.optimisers.objective.objective import Objective
 from fedot.core.optimisers.gp_comp.operators.selection import SelectionTypesEnum
-from fedot.core.optimisers.gp_comp.gp_optimiser import EvoGraphOptimiser, GPGraphOptimiserParameters, GeneticSchemeTypesEnum
+from fedot.core.optimisers.gp_comp.gp_optimiser import EvoGraphOptimiser, GPGraphOptimiserParameters, \
+    GeneticSchemeTypesEnum
 from fedot.core.optimisers.adapters import DirectAdapter
 from fedot.core.dag.verification_rules import has_no_cycle, has_no_self_cycled_nodes
 from examples.divided_bn import DividedBN
@@ -24,6 +26,7 @@ import bamt.Networks as Nets
 from sklearn import preprocessing
 import random
 import pandas as pd
+import numpy as np
 from copy import deepcopy
 from fedot.core.dag.graph import Graph
 import time
@@ -43,19 +46,38 @@ class CustomGraphNode(OptNode):
 
 # задаем метрику
 def custom_metric(graph: CustomGraphModel, data: pd.DataFrame):
-    score = 0
     graph_nx, labels = graph_structure_as_nx_graph(graph)
     struct = []
-    for pair in graph_nx.edges():
-        l1 = str(labels[pair[0]])
-        l2 = str(labels[pair[1]])
+    for meta_edge in graph_nx.edges():
+        l1 = str(labels[meta_edge[0]])
+        l2 = str(labels[meta_edge[1]])
         struct.append([l1, l2])
 
     bn_model = BayesianNetwork(struct)
     bn_model.add_nodes_from(data.columns)
 
+    # global local_edges, root_nodes, child_nodes, initial_df
+
+    # merge local edges into one list
+
+    unpacked_hidden_edges = []
+
+    # for meta_edge in struct:
+    #     local_root_nodes = root_nodes[meta_edge[0]]
+    #     local_child_nodes = child_nodes[meta_edge[1]]
+    #     for root_node in local_root_nodes:
+    #         for child_node in local_child_nodes:
+    #             unpacked_hidden_edges.append([meta_edge, root_node])
+    #             unpacked_hidden_edges.append([child_node, meta_edge])
+
+    # bn_model.add_nodes_from(initial_df.columns)
+    # bn_model.add_edges_from(unpacked_hidden_edges)
+    # for key in local_edges:
+    #     bn_model.add_edges_from(local_edges[key])
+
     score = K2Score(data).score(bn_model)
     return [-score]
+
 
 # задаем кроссовер (обмен ребрами)
 def custom_crossover_exchange_edges(graph_first: OptGraph, graph_second: OptGraph, max_depth):
@@ -65,21 +87,19 @@ def custom_crossover_exchange_edges(graph_first: OptGraph, graph_second: OptGrap
     num_cros = 100
     try:
         for _ in range(num_cros):
-            old_edges1 = []
-            old_edges2 = []
             new_graph_first = deepcopy(graph_first)
             new_graph_second = deepcopy(graph_second)
 
             edges_1 = new_graph_first.operator.get_all_edges()
             edges_2 = new_graph_second.operator.get_all_edges()
-            count = ceil(min(len(edges_1), len(edges_2))/2)
+            count = ceil(min(len(edges_1), len(edges_2)) / 2)
             choice_edges_1 = random.sample(edges_1, count)
             choice_edges_2 = random.sample(edges_2, count)
 
-            for pair in choice_edges_1:
-                new_graph_first.operator.disconnect_nodes(pair[0], pair[1], False)
-            for pair in choice_edges_2:
-                new_graph_second.operator.disconnect_nodes(pair[0], pair[1], False)
+            for meta_edge in choice_edges_1:
+                new_graph_first.operator.disconnect_nodes(meta_edge[0], meta_edge[1], False)
+            for meta_edge in choice_edges_2:
+                new_graph_second.operator.disconnect_nodes(meta_edge[0], meta_edge[1], False)
 
             old_edges1 = new_graph_first.operator.get_all_edges()
             old_edges2 = new_graph_second.operator.get_all_edges()
@@ -87,12 +107,12 @@ def custom_crossover_exchange_edges(graph_first: OptGraph, graph_second: OptGrap
             new_edges_2 = [[find_node(new_graph_second, i[0]), find_node(new_graph_second, i[1])]
                            for i in choice_edges_1]
             new_edges_1 = [[find_node(new_graph_first, i[0]), find_node(new_graph_first, i[1])] for i in choice_edges_2]
-            for pair in new_edges_1:
-                if pair not in old_edges1:
-                    new_graph_first.operator.connect_nodes(pair[0], pair[1])
-            for pair in new_edges_2:
-                if pair not in old_edges2:
-                    new_graph_second.operator.connect_nodes(pair[0], pair[1])
+            for meta_edge in new_edges_1:
+                if meta_edge not in old_edges1:
+                    new_graph_first.operator.connect_nodes(meta_edge[0], meta_edge[1])
+            for meta_edge in new_edges_2:
+                if meta_edge not in old_edges2:
+                    new_graph_second.operator.connect_nodes(meta_edge[0], meta_edge[1])
 
             if old_edges1 != new_graph_first.operator.get_all_edges() or old_edges2 != new_graph_second.operator.get_all_edges():
                 break
@@ -164,15 +184,14 @@ def _has_no_duplicates(graph):
         raise ValueError('Custom graph has duplicates')
     return True
 
-def run_example():
 
-    data = pd.read_csv('examples/data/'+file+'.csv')
+def run_example():
+    data = pd.read_csv(parentdir + 'examples/data/' + file + '.csv')
     if 'Unnamed: 0' in data.columns:
         data = data.drop(['Unnamed: 0'], axis=1, inplace=True)
 
     data.dropna(inplace=True)
     data.reset_index(inplace=True, drop=True)
-
 
     global local_edges, root_nodes, child_nodes, initial_df
 
@@ -180,29 +199,22 @@ def run_example():
 
     # initialize divided_bn
 
-    divided_bn = DividedBN(data = data, max_local_structures=20)
+    start_time = time.time()
+
+    divided_bn = DividedBN(data=data, max_local_structures=20)
 
     divided_bn.set_local_structures(data, datatype="discrete")
 
     local_edges = divided_bn.local_structures_edges
 
-    print('Local edges:', local_edges)
-
-    divided_bn.set_hidden_nodes(data = data)
-
-    print('Hidden nodes:', divided_bn.hidden_nodes)
+    divided_bn.set_hidden_nodes(data=data)
 
     hidden_df = pd.DataFrame.from_dict(divided_bn.hidden_nodes)
 
     hidden_df.columns = hidden_df.columns.astype(str)
 
-    print('Hidden df:', hidden_df)
-
     root_nodes = divided_bn.root_nodes
     child_nodes = divided_bn.child_nodes
-
-    print('Root nodes:', root_nodes)
-    print('Child nodes:', child_nodes)
 
     vertices = list(hidden_df.columns)
 
@@ -258,9 +270,13 @@ def run_example():
     optimized_graph = optimiser.optimise(objective_eval)[0]
     # вывод полученного графа
 
+    print("--- %s seconds ---" % (time.time() - start_time))
+
     evolutionary_edges = optimized_graph.operator.get_all_edges()
 
-    optimized_graph.show()
+    print('evolutionary_edges', evolutionary_edges)
+
+    # optimized_graph.show()
 
     external_edges = []
 
@@ -274,15 +290,27 @@ def run_example():
     #         for child_node in child_nodes[meta_edge[1]]:
     #             external_edges.append([root_node, child_node])
 
+    unpacked_hidden_edges = np.array([])
+
+    for meta_edge in evolutionary_edges:
+        meta_parent_node = str(meta_edge[0])
+        local_root_nodes = root_nodes[int(str(meta_edge[0]))]
+        local_child_nodes = child_nodes[int(str(meta_edge[1]))]
+        for root_node in local_root_nodes:
+            for child_node in local_child_nodes:
+                np.append(unpacked_hidden_edges, [str(meta_parent_node), str(root_node)])
+                np.append(unpacked_hidden_edges, [str(child_node), str(meta_parent_node)])
+
+    print('Unpacked hidden edges:', unpacked_hidden_edges)
+
     all_edges = local_edges_merged + external_edges
 
-    print("Evo edges:", all_edges)
+    print("Evo edges:", evolutionary_edges)
 
     return all_edges
 
 
 if __name__ == '__main__':
-
     # файл с исходными данными (должен лежать в 'examples/data/')
     file = 'pigs'
     # размер популяции
@@ -293,9 +321,7 @@ if __name__ == '__main__':
     crossover_probability = 0.8
     # вероятность мутации
     mutation_probability = 0.9
-    
-    start_time = time.time()
 
     run_example()
 
-    print("--- %s seconds ---" % (time.time() - start_time))
+

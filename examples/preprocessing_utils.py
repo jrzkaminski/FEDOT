@@ -133,7 +133,7 @@ def get_edges_of_local_structures(data: pd.DataFrame,
                                   maxclus: int = 4,
                                   has_logit: bool = True,
                                   use_mixture: bool = True,
-                                  parallel_count: int = 4) -> list:
+                                  parallel_count: int = 4):
     """_summary_
 
     Args:
