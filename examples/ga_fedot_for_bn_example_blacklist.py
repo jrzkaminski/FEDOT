@@ -19,8 +19,8 @@ from fedot.core.optimisers.adapters import DirectAdapter
 from fedot.core.dag.verification_rules import has_no_cycle, has_no_self_cycled_nodes
 from examples.preprocessing_utils import get_edges_of_local_structures
 from fedot.core.composer.gp_composer.gp_composer import PipelineComposerRequirements
-import bamt.Preprocessors as pp
-import bamt.Networks as Nets
+import bamt.preprocessors as pp
+import bamt.networks as Nets
 from sklearn import preprocessing
 import random
 import pandas as pd

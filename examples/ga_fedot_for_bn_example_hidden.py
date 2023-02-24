@@ -1,8 +1,8 @@
 import sys
 from typing import Optional, Union, List
 
-parentdir = '/Users/jerzypro/Documents/GitHub/FEDOT/'
-bamtdir = '/Users/jerzypro/Documents/GitHub/BAMT'
+parentdir = '/home/jerzy/Documents/GitHub/jrzkaminski/FEDOT/'
+bamtdir = '/home/jerzy/Documents/GitHub/jrzkaminski/BAMT'
 sys.path.insert(0, parentdir)
 sys.path.insert(0, bamtdir)
 
@@ -21,8 +21,8 @@ from fedot.core.optimisers.adapters import DirectAdapter
 from fedot.core.dag.verification_rules import has_no_cycle, has_no_self_cycled_nodes
 from examples.divided_bn import DividedBN
 from fedot.core.composer.gp_composer.gp_composer import PipelineComposerRequirements
-import bamt.Preprocessors as pp
-import bamt.Networks as Nets
+import bamt.preprocessors as pp
+import bamt.networks as Nets
 from sklearn import preprocessing
 import random
 import pandas as pd
@@ -186,12 +186,14 @@ def _has_no_duplicates(graph):
 
 
 def run_example():
-    data = pd.read_csv(parentdir + 'examples/data/' + file + '.csv')
+    data = pd.read_csv('https://raw.githubusercontent.com/jrzkaminski/BAMT-old/main/data/pigs.csv')
     if 'Unnamed: 0' in data.columns:
         data = data.drop(['Unnamed: 0'], axis=1, inplace=True)
 
     data.dropna(inplace=True)
     data.reset_index(inplace=True, drop=True)
+
+    data = data.iloc[:, :100]
 
     global local_edges, root_nodes, child_nodes, initial_df
 
@@ -201,7 +203,7 @@ def run_example():
 
     start_time = time.time()
 
-    divided_bn = DividedBN(data=data, max_local_structures=20)
+    divided_bn = DividedBN(data=data, max_local_structures=4)
 
     divided_bn.set_local_structures(data, datatype="discrete")
 
