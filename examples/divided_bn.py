@@ -6,6 +6,7 @@ from varclushi import VarClusHi
 from pgmpy.estimators import K2Score
 from sklearn import preprocessing
 from sklearn.cluster import KMeans
+from joblib import Parallel, delayed
 import sys
 
 parentdir = '/home/jerzy/Documents/GitHub/GitHub/FEDOT'
@@ -42,7 +43,7 @@ class DividedBN:
     def __init__(self, 
                  data: pd.DataFrame,
                  max_local_structures: int = 8,
-                 hidden_nodes_clusters: int = 8):
+                 hidden_nodes_clusters=None):
         """
         :param data: data for clustering
         :param cluster_number: number of clusters
@@ -58,89 +59,134 @@ class DividedBN:
         self.root_nodes = {}
         self.child_nodes = {}
 
+    # def set_local_structures(self,
+    #                          data,
+    #                          datatype: str = 'mixed',
+    #                          has_logit: bool = True,
+    #                          use_mixture: bool = True,
+    #                          maxeigval2: int = 1,
+    #                          parallel_count: int = 4):
+    #     """_summary_
+
+    #     Args:
+    #         data (pd.DataFrame): _description_
+    #         datatype (str, optional): _description_. Defaults to 'mixed'.
+    #         number_of_local_structures (int, optional): _description_. Defaults to 2.
+    #         has_logit (bool, optional): _description_. Defaults to True.
+    #         use_mixture (bool, optional): _description_. Defaults to True.
+    #         parallel_count (int, optional): _description_. Defaults to 4.
+
+    #     Returns:
+    #         list: _description_
+    #     """
+
+    #     from joblib import Parallel, delayed
+
+    #     self.local_structures_nodes = varclushi_clustering(data, maxeigval2=maxeigval2, maxclus=self.max_local_structures)
+
+    #     for key in self.local_structures_nodes:
+    #         data_cluster = self.data[self.local_structures_nodes[key]]
+    #         encoder = preprocessing.LabelEncoder()
+    #         discretizer = preprocessing.KBinsDiscretizer(n_bins=5, encode='ordinal', strategy='quantile')
+    #         p = pp.Preprocessor([('encoder', encoder), ('discretizer', discretizer)])
+    #         local_discretized_data, _ = p.apply(data_cluster)
+    #         if datatype == "mixed":
+    #             bn = Nets.HybridBN(has_logit=has_logit, use_mixture=use_mixture)
+    #         elif datatype == "discrete":
+    #             bn = Nets.DiscreteBN()
+    #         elif datatype == "continuous":
+    #             bn = Nets.ContinuousBN()
+    #         info = p.info
+    #         bn.add_nodes(info)
+    #         bn.add_edges(local_discretized_data,  scoring_function=('K2', K2Score))
+    #         edges = bn.edges
+    #         local_structure_info = bn.get_info()
+    #         self.local_structures_edges[key] = edges
+    #         self.local_structures_info[key] = local_structure_info
+    #         self.root_nodes[key] = []
+    #         self.child_nodes[key] = []
+    #         list_of_all_parents = []
+    #         self.root_nodes[key] = local_structure_info[local_structure_info['parents'].str.len() == 0]['name'].tolist()
+    #         # merge all lists in pandas column into one list
+    #         for i in range(len(local_structure_info)):
+    #             list_of_all_parents += local_structure_info['parents'][i]
+    #         for node in local_structure_info['name']:
+    #             if node not in list_of_all_parents:
+    #                 self.child_nodes[key].append(str(node))
+
     def set_local_structures(self,
-                             data,
-                             datatype: str = 'mixed',
-                             has_logit: bool = True,
-                             use_mixture: bool = True,
-                             maxeigval2: int = 1,
-                             parallel_count: int = 4):
-        """_summary_
+                            data,
+                            datatype: str = 'mixed',
+                            has_logit: bool = True,
+                            use_mixture: bool = True,
+                            maxeigval2: int = 1,
+                            parallel_count: int = 4):
 
-        Args:
-            data (pd.DataFrame): _description_
-            datatype (str, optional): _description_. Defaults to 'mixed'.
-            number_of_local_structures (int, optional): _description_. Defaults to 2.
-            has_logit (bool, optional): _description_. Defaults to True.
-            use_mixture (bool, optional): _description_. Defaults to True.
-            parallel_count (int, optional): _description_. Defaults to 4.
-
-        Returns:
-            list: _description_
-        """
-
-        from joblib import Parallel, delayed
-
-        self.local_structures_nodes = varclushi_clustering(data, maxeigval2=maxeigval2, maxclus=self.max_local_structures)
-
-        # def wrapper(data: pd.DataFrame,
-        #             has_logit: bool = True,
-        #             use_mixture: bool = True):
-        #     data_cluster = data[cluster]
-        #     encoder = preprocessing.LabelEncoder()
-        #     discretizer = preprocessing.KBinsDiscretizer(n_bins=5, encode='ordinal', strategy='quantile')
-        #     p = pp.Preprocessor([('encoder', encoder), ('discretizer', discretizer)])
-        #     discretized_data, _ = p.apply(data_cluster)
-        #     local_discretized_data = discretized_data[cluster]
-        #     bn = Nets.HybridBN(has_logit=has_logit, use_mixture=use_mixture)
-        #     info = p.info
-        #     bn.add_nodes(info)
-        #     bn.add_edges(local_discretized_data,  scoring_function=('K2', K2Score))
-        #     edges = bn.edges
-        #     local_structures_edges += edges
-
-        # Parallel(n_jobs=parallel_count)(delayed(wrapper)(data=data, has_logit=has_logit, use_mixture=use_mixture)(range(n)) for n in clusters.values())
-
-
-        for key in self.local_structures_nodes:
-            data_cluster = self.data[self.local_structures_nodes[key]]
-            encoder = preprocessing.LabelEncoder()
-            discretizer = preprocessing.KBinsDiscretizer(n_bins=5, encode='ordinal', strategy='quantile')
-            p = pp.Preprocessor([('encoder', encoder), ('discretizer', discretizer)])
-            local_discretized_data, _ = p.apply(data_cluster)
+        def create_bn(datatype, has_logit, use_mixture):
             if datatype == "mixed":
-                bn = Nets.HybridBN(has_logit=has_logit, use_mixture=use_mixture)
+                return Nets.HybridBN(has_logit=has_logit, use_mixture=use_mixture)
             elif datatype == "discrete":
-                bn = Nets.DiscreteBN()
+                return Nets.DiscreteBN()
             elif datatype == "continuous":
-                bn = Nets.ContinuousBN()
-            info = p.info
+                return Nets.ContinuousBN()
+
+        def find_root_and_child_nodes(local_structure_info):
+            root_nodes = local_structure_info[local_structure_info['parents'].str.len() == 0]['name'].tolist()
+            list_of_all_parents = sum(local_structure_info['parents'].tolist(), [])
+            child_nodes = [node for node in local_structure_info['name'] if node not in list_of_all_parents]
+            return root_nodes, child_nodes
+
+        def process_key(key):
+            data_cluster = self.data[self.local_structures_nodes[key]]
+            local_discretized_data, info = self.preprocess_data(data_cluster)
+            bn = create_bn(datatype, has_logit, use_mixture)
             bn.add_nodes(info)
-            bn.add_edges(local_discretized_data,  scoring_function=('K2', K2Score))
-            edges = bn.edges
+            bn.add_edges(local_discretized_data, scoring_function=('K2', K2Score))
             local_structure_info = bn.get_info()
+            root_nodes, child_nodes = find_root_and_child_nodes(local_structure_info)
+            return key, bn.edges, local_structure_info, root_nodes, child_nodes
+
+        self.local_structures_nodes = varclushi_clustering(data,
+                                                            maxeigval2=maxeigval2,
+                                                            maxclus=self.max_local_structures)
+
+        results = Parallel(n_jobs=parallel_count)(
+            delayed(process_key)(key) for key in self.local_structures_nodes)
+
+        for key, edges, local_structure_info, root_nodes, child_nodes in results:
             self.local_structures_edges[key] = edges
             self.local_structures_info[key] = local_structure_info
-            self.root_nodes[key] = []
-            self.child_nodes[key] = []
-            list_of_all_parents = []
-            self.root_nodes[key] = local_structure_info[local_structure_info['parents'].str.len() == 0]['name'].tolist()
-            # merge all lists in pandas column into one list
-            for i in range(len(local_structure_info)):
-                list_of_all_parents += local_structure_info['parents'][i]
-            for node in local_structure_info['name']:
-                if node not in list_of_all_parents:
-                    self.child_nodes[key].append(str(node))
+            self.root_nodes[key] = root_nodes
+            self.child_nodes[key] = child_nodes
 
+    def preprocess_data(self, data_cluster):
+        encoder = preprocessing.LabelEncoder()
+        discretizer = preprocessing.KBinsDiscretizer(n_bins=5, encode='ordinal', strategy='quantile')
+        p = pp.Preprocessor([('encoder', encoder), ('discretizer', discretizer)])
+        local_discretized_data, _ = p.apply(data_cluster)
+        return local_discretized_data, p.info
+
+    def find_optimal_clusters(self, data, max_clusters=10, random_state=42):
+        wcss = []
+        for n_clusters in range(1, max_clusters + 1):
+            kmeans = KMeans(n_clusters=n_clusters, random_state=random_state)
+            kmeans.fit(data)
+            wcss.append(kmeans.inertia_)
+
+        # Find the elbow point
+        elbow_point = np.argmax(np.diff(np.diff(wcss))) + 2
+        return elbow_point
 
     def set_hidden_nodes(self, data):
-
-        k_means = KMeans(n_clusters=self.hidden_nodes_clusters)
-
         for key in self.local_structures_nodes:
             data_cluster = data[self.local_structures_nodes[key]]
+            
+            if self.hidden_nodes_clusters is None:
+                # Use the Elbow method to find the optimal number of clusters
+                n_clusters = self.find_optimal_clusters(data_cluster)
+            else:
+                n_clusters = self.hidden_nodes_clusters
+
+            k_means = KMeans(n_clusters=n_clusters)
             k_means.fit(data_cluster)
             self.hidden_nodes[key] = k_means.fit_predict(data_cluster)
-
-        
-
