@@ -184,6 +184,7 @@ class DividedBN:
             if self.hidden_nodes_clusters is None:
                 # Use the Elbow method to find the optimal number of clusters
                 n_clusters = self.find_optimal_clusters(data_cluster)
+                print("Optimal number of clusters for local structure {} is {}".format(key, n_clusters))
             else:
                 n_clusters = self.hidden_nodes_clusters
 
